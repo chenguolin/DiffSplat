@@ -14,6 +14,9 @@ export HF_HOME=~/.cache/huggingface
 export TORCH_HOME=~/.cache/torch
 export NCCL_DEBUG=VERSION
 
+# Ensure local imports like `import src.*` work when invoked from repo root
+export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$(pwd):$(pwd)/src"
+
 accelerate launch \
     --num_machines $NUM_MACHINES \
     --num_processes $(( $NUM_MACHINES * $NUM_LOCAL_GPUS )) \
