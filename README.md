@@ -70,6 +70,38 @@ cd DiffSplat
 bash settings/setup.sh
 ```
 
+### ▶️ Optional: Containerized quickstart (Docker/RunPod)
+
+If you prefer a batteries-included container with SSH, JupyterLab, and FileBrowser pre-wired, you can use the optional files under `docker/runpod/`.
+
+Build the image (from repo root):
+
+```bash
+docker build -f docker/runpod/Dockerfile -t diffsplat-runpod .
+```
+
+Run locally with GPU (Docker Desktop + WSL2 on Windows/macOS, or native Linux):
+
+```bash
+docker run --gpus all \
+    -p 22:22 -p 80:80 -p 9090:9090 -p 9999:9999 \
+    -e JUPYTER_PASSWORD=changeme \
+    diffsplat-runpod
+```
+
+Services inside the container:
+
+- SSH: port 22 (key-based auth; set `PUBLIC_KEY` to inject your key)
+- JupyterLab: port 9999 (`--ip=0.0.0.0`, `--no-browser`; use token from logs or `JUPYTER_PASSWORD`)
+- FileBrowser: port 9090
+- Nginx: port 80 (optional welcome)
+
+On RunPod, map these ports in the UI. HTTP ports (80/9090/9999) will be proxied to `https://<pod>-<port>.proxy.runpod.net/`. SSH is a raw TCP port; connect with:
+
+```bash
+ssh -i /path/to/key -p <mapped_port> root@<runpod_host>
+```
+
 
 ## 📊 Dataset
 
