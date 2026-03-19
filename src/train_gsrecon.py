@@ -567,7 +567,7 @@ def main():
                     with torch.autocast("cuda", torch.bfloat16):
                         model.eval()
 
-                        all_val_matrics, val_steps = {}, 0
+                        all_val_metrics, val_steps = {}, 0
                         val_progress_bar = tqdm(
                             range(len(val_loader)) if args.max_val_steps is None \
                                 else range(args.max_val_steps),
@@ -610,14 +610,14 @@ def main():
                             val_progress_bar.update(1)
                             val_steps += 1
 
-                            all_val_matrics.setdefault("psnr", []).append(val_psnr)
-                            all_val_matrics.setdefault("ssim", []).append(val_ssim)
-                            all_val_matrics.setdefault("lpips", []).append(val_lpips)
-                            all_val_matrics.setdefault("loss", []).append(val_loss)
+                            all_val_metrics.setdefault("psnr", []).append(val_psnr)
+                            all_val_metrics.setdefault("ssim", []).append(val_ssim)
+                            all_val_metrics.setdefault("lpips", []).append(val_lpips)
+                            all_val_metrics.setdefault("loss", []).append(val_loss)
                             if val_coord_mse is not None:
-                                all_val_matrics.setdefault("coord_mse", []).append(val_coord_mse)
+                                all_val_metrics.setdefault("coord_mse", []).append(val_coord_mse)
                             if val_normal_cosim is not None:
-                                all_val_matrics.setdefault("normal_cosim", []).append(val_normal_cosim)
+                                all_val_metrics.setdefault("normal_cosim", []).append(val_normal_cosim)
 
                             if args.max_val_steps is not None and val_steps == args.max_val_steps:
                                 break
@@ -628,31 +628,31 @@ def main():
                     # Switch back to the original model parameters
                     ema_states.restore(model.parameters())
 
-                for k, v in all_val_matrics.items():
-                    all_val_matrics[k] = torch.tensor(v).mean()
+                for k, v in all_val_metrics.items():
+                    all_val_metrics[k] = torch.tensor(v).mean()
 
                 logger.info(
                     f"Eval [{global_update_step:06d} / {total_updated_steps:06d}] " +
-                    f"psnr: {all_val_matrics['psnr'].item():.4f}, " +
-                    f"ssim: {all_val_matrics['ssim'].item():.4f}, " +
-                    f"lpips: {all_val_matrics['lpips'].item():.4f}, " +
-                    f"loss: {all_val_matrics['loss'].item():.4f}\n"
+                    f"psnr: {all_val_metrics['psnr'].item():.4f}, " +
+                    f"ssim: {all_val_metrics['ssim'].item():.4f}, " +
+                    f"lpips: {all_val_metrics['lpips'].item():.4f}, " +
+                    f"loss: {all_val_metrics['loss'].item():.4f}\n"
                 )
 
                 if accelerator.is_main_process:
                     wandb.log({
-                        "validation/psnr": all_val_matrics["psnr"].item(),
-                        "validation/ssim": all_val_matrics["ssim"].item(),
-                        "validation/lpips": all_val_matrics["lpips"].item(),
-                        "validation/loss": all_val_matrics["loss"].item()
+                        "validation/psnr": all_val_metrics["psnr"].item(),
+                        "validation/ssim": all_val_metrics["ssim"].item(),
+                        "validation/lpips": all_val_metrics["lpips"].item(),
+                        "validation/loss": all_val_metrics["loss"].item()
                     }, step=global_update_step)
-                    if "coord_mse" in all_val_matrics:
+                    if "coord_mse" in all_val_metrics:
                         wandb.log({
-                            "validation/coord_mse": all_val_matrics["coord_mse"].item()
+                            "validation/coord_mse": all_val_metrics["coord_mse"].item()
                         }, step=global_update_step)
-                    if "normal_cosim" in all_val_matrics:
+                    if "normal_cosim" in all_val_metrics:
                         wandb.log({
-                            "validation/normal_cosim": all_val_matrics["normal_cosim"].item()
+                            "validation/normal_cosim": all_val_metrics["normal_cosim"].item()
                         }, step=global_update_step)
 
                     # Visualize rendering
